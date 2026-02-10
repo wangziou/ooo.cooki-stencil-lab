@@ -1,0 +1,7 @@
+{
+  "name": "cooki stencil lab",
+  "description": "Professional tattoo stencil creator with advanced line extraction and batch processing capabilities.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
