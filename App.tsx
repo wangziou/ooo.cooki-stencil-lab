@@ -191,8 +191,42 @@ const App: React.FC = () => {
   };
 
   const handleBatchDownload = async () => {
-    // Download ALL images
-    for (const img of images) {
+    // 1. Collect all processable images
+    const validImages = images.filter(img => img.processedUrl);
+
+    if (validImages.length === 0) return;
+
+    // 2. Try Native Batch Share (Mobile)
+    if (navigator.share && navigator.canShare) {
+      try {
+        const files: File[] = [];
+
+        // Convert all to Files
+        for (const img of validImages) {
+          if (img.processedUrl) {
+            const fileName = `${img.name.split('.')[0]}_stencil.jpg`;
+            const response = await fetch(img.processedUrl);
+            const blob = await response.blob();
+            const file = new File([blob], fileName, { type: 'image/jpeg' });
+            files.push(file);
+          }
+        }
+
+        if (navigator.canShare({ files })) {
+          await navigator.share({
+            files,
+            title: 'Cooki Stencil Batch',
+            text: `Here are your ${files.length} stencils!`,
+          });
+          return; // Success! Skip fallback
+        }
+      } catch (error) {
+        console.warn('Batch share failed, falling back to individual downloads', error);
+      }
+    }
+
+    // 3. Fallback: Download individually
+    for (const img of validImages) {
       if (img.processedUrl) {
         // Use forced download to skip Share Sheet for batch operations
         await handleDownload(img, 'jpg', true);
