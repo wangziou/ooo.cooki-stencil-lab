@@ -37,3 +37,10 @@ This project is configured to deploy to GitHub Pages using GitHub Actions.
 4. Save.
 
 The deployment workflow runs automatically on every push to the `main` branch.
+
+### Troubleshooting
+If you see a blank page after deployment:
+1. Ensure `vite.config.ts` has the correct `base` path (should match your repository name).
+2. Ensure a `.nojekyll` file exists in the `public/` directory (this prevents GitHub Pages from ignoring files starting with `_`).
+3. Check the browser console (F12) for 404 errors.
+
