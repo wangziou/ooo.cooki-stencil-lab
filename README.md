@@ -8,6 +8,13 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1VanuAQAZD0xemU7AaEombveccpVUMwA9
 
+## Features
+- **Smart Stencil Generation**: Convert images to stencils with 'Hollow' (Edge Detect) or 'Solid' (Adaptive Threshold) modes.
+- **Customizable Processing**: Adjust threshold, noise reduction (detail level), and line thickness.
+- **AI Art Advisor**: Built-in Gemini AI to suggest placement and style improvements.
+- **Export Options**: Download as PNG, JPG, or print-ready PDF (A4).
+- **Multi-Size Generation**: Automatically create sizing sheets with 3x, 6x, or 9x variants.
+
 ## Run Locally
 
 **Prerequisites:**  Node.js
@@ -18,3 +25,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1VanuAQAZD0xemU7AaEombv
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+   `npm run dev`
+
+## Deployment
+
+This project is configured to deploy to GitHub Pages using GitHub Actions.
+
+1. Go to your repository **Settings** -> **Pages**.
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
+3. Select `gh-pages` branch (this branch is created automatically by the workflow after the first successful run).
+4. Save.
+
+The deployment workflow runs automatically on every push to the `main` branch.
