@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS: StencilSettings = {
   minSize: 1.5,
   maxSize: 3.5,
   showDimensions: true,
-  saturation: 100,
+  brilliance: 0,
   contrast: 100,
   brightness: 100,
   sharpness: 0
@@ -143,7 +143,7 @@ const App: React.FC = () => {
     updateSettingsAndProcess(newSettings);
   };
 
-  const handleDownload = async (img: ProcessedImage, format: 'png' | 'jpg' | 'pdf') => {
+  const handleDownload = async (img: ProcessedImage, format: 'png' | 'jpg' | 'pdf', forceDownload = false) => {
     if (!img.processedUrl) return;
 
     const fileName = `${img.name.split('.')[0]}_stencil.${format}`;
@@ -157,7 +157,8 @@ const App: React.FC = () => {
       pdf.save(fileName);
     } else {
       // Try Web Share API first (Mobile friendly)
-      if (navigator.share) {
+      // Skip if forceDownload is true (e.g. for Batch Download)
+      if (!forceDownload && navigator.share) {
         try {
           // Convert DataURL to Blob
           const response = await fetch(img.processedUrl);
@@ -189,10 +190,13 @@ const App: React.FC = () => {
   };
 
   const handleBatchDownload = async () => {
+    // Download ALL images
     for (const img of images) {
       if (img.processedUrl) {
-        handleDownload(img, 'jpg');
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Use forced download to skip Share Sheet for batch operations
+        await handleDownload(img, 'jpg', true);
+        // Small delay to prevent browser throttling downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
   };
@@ -580,13 +584,14 @@ const App: React.FC = () => {
 
               {currentSettings.mode === StencilMode.REALISM ? (
                 <>
-                  {/* Saturation Slider */}
+                  {/* Brilliance Slider */}
                   <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
                     <div className="flex justify-between mb-2">
-                      <label className="text-xs font-bold text-slate-600">Vibrance (Saturation)</label>
-                      <span className="text-xs text-purple-500 font-bold">{currentSettings.saturation}%</span>
+                      <label className="text-xs font-bold text-slate-600">Brilliance</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.brilliance}%</span>
                     </div>
-                    <input type="range" min="0" max="200" value={currentSettings.saturation || 100} onChange={(e) => handleSettingChange('saturation', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                    {/* Range -100 to 100 */}
+                    <input type="range" min="-100" max="100" value={currentSettings.brilliance || 0} onChange={(e) => handleSettingChange('brilliance', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
                   </div>
 
                   {/* Contrast Slider */}

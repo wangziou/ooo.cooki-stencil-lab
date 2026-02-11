@@ -131,12 +131,12 @@ export const generateStencil = async (
   }
 
   if (settings.mode === StencilMode.REALISM) {
-    // Apply CSS-like filters for Realism
-    const saturate = settings.saturation !== undefined ? settings.saturation : 100;
+    // Apply CSS-like filters for Realism (Contrast & Brightness only)
+    // Saturation is replaced by Brilliance (applied manually later)
     const contrast = settings.contrast !== undefined ? settings.contrast : 100;
     const brightness = settings.brightness !== undefined ? settings.brightness : 100;
 
-    ctx.filter = `saturate(${saturate}%) contrast(${contrast}%) brightness(${brightness}%)`;
+    ctx.filter = `contrast(${contrast}%) brightness(${brightness}%)`;
   }
 
   ctx.drawImage(img, 0, 0, w, h);
@@ -145,8 +145,67 @@ export const generateStencil = async (
   const imgData = ctx.getImageData(0, 0, w, h);
   const data = imgData.data;
 
-  // Realism specific processing (Sharpness) -> Return Early
+  // Realism specific processing (Brilliance & Sharpness) -> Return Early
   if (settings.mode === StencilMode.REALISM) {
+    const brilliance = settings.brilliance || 0; // -100 to 100
+
+    if (brilliance !== 0) {
+      // Smart Tone Mapping (Brilliance)
+      const strength = brilliance / 100;
+      for (let i = 0; i < w * h; i++) {
+        const r = data[i * 4];
+        const g = data[i * 4 + 1];
+        const b = data[i * 4 + 2];
+
+        // 1. Calculate Luma (Y)
+        const y = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+        // 2. Brilliance Curve
+        let newY = y;
+
+        if (strength > 0) {
+          // Positive Brilliance: HDR look
+          // Lift shadows: add to Y where Y is small
+          const shadowLift = Math.pow(1 - y, 5) * 1.0 * strength; // Strong lift at very bottom
+
+          // Dampen highlights: subtract from Y where Y is large
+          const highlightDamp = Math.pow(y, 4) * 0.4 * strength;
+
+          newY = y + shadowLift - highlightDamp;
+
+          // Midtone Contrast Boost (Sigmoid)
+          // We mix original linear Y with a sigmoid curve
+          const sigmoid = 1 / (1 + Math.exp(-10 * (newY - 0.5))); // Steep sigmoid
+          // Map sigmoid back to 0-1 nicely
+          // Or simpler: use a contrast polynomial
+          // f(x) = x + alpha * x * (1-x) * (x-0.5) ? No
+
+          // Simple contrast stretch around 0.5
+          // val = (val - 0.5) * contrast + 0.5
+          const contrastFactor = 1 + (strength * 0.5); // Up to 1.5x contrast
+          const contrasted = (newY - 0.5) * contrastFactor + 0.5;
+
+          // Learn/Mix: 
+          // We want the shadow/highlight recovery, AND the contrast.
+          // Let's use the contrasted version, but clamped.
+          newY = Math.max(0, Math.min(1, contrasted));
+
+        } else {
+          // Negative Brilliance: Flatten / Dull
+          newY = y * (1 + strength * 0.5); // Just darken/dull
+        }
+
+        // 3. Apply Y shift to RGB
+        // preserve color ratios
+        if (y > 0.001) {
+          const scale = newY / y;
+          data[i * 4] = clamp(r * scale, 0, 255);
+          data[i * 4 + 1] = clamp(g * scale, 0, 255);
+          data[i * 4 + 2] = clamp(b * scale, 0, 255);
+        }
+      }
+    }
+
     if (settings.sharpness && settings.sharpness > 0) {
       // Simple Sharpen Kernel
       // A standard sharpen kernel

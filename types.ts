@@ -17,7 +17,7 @@ export interface StencilSettings {
   showDimensions: boolean; // Draw size label
 
   // Realism Mode Settings
-  saturation?: number; // 0-200 (100 = default)
+  brilliance?: number; // -100 to 100 (0 = default)
   contrast?: number;   // 0-200 (100 = default)
   brightness?: number; // 0-200 (100 = default)
   sharpness?: number;  // 0-10 (0 = default)
