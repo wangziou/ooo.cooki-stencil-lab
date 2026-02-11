@@ -262,7 +262,7 @@ const App: React.FC = () => {
         )}
 
         {/* Center - Canvas / Preview */}
-        <main className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col items-center order-2 h-[50vh] lg:h-auto w-full lg:w-auto">
+        <main className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col items-center order-2 h-[75vh] lg:h-auto w-full lg:w-auto">
           {images.length === 0 ? (
             // Empty State
             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-purple-50 to-pink-50 w-full">
@@ -305,44 +305,44 @@ const App: React.FC = () => {
               </div>
 
               {/* CENTRAL COMMAND BAR */}
-              <div className="absolute bottom-8 z-30 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                <div className="bg-white/90 backdrop-blur-xl border border-white/60 rounded-3xl shadow-[0_10px_40px_-10px_rgba(100,20,100,0.15)] p-2 flex items-center gap-2 ring-1 ring-purple-50">
+              <div className="absolute bottom-4 lg:bottom-8 z-30 animate-in slide-in-from-bottom-5 fade-in duration-300 w-full flex justify-center pointer-events-none">
+                <div className="bg-white/60 lg:bg-white/90 backdrop-blur-xl border border-white/40 lg:border-white/60 rounded-3xl shadow-[0_10px_40px_-10px_rgba(100,20,100,0.15)] p-1.5 lg:p-2 flex items-center gap-1 lg:gap-2 ring-1 ring-purple-50 scale-90 lg:scale-100 origin-bottom pointer-events-auto">
 
                   {/* Add Image */}
-                  <label className="flex flex-col items-center justify-center w-16 h-14 cursor-pointer hover:bg-pink-50 rounded-2xl transition-colors group">
-                    <Plus className="w-5 h-5 text-pink-400 group-hover:scale-110 transition-transform mb-1" />
-                    <span className="text-[10px] text-slate-500 font-bold">Add</span>
+                  <label className="flex flex-col items-center justify-center w-14 h-12 lg:w-16 lg:h-14 cursor-pointer hover:bg-pink-50 rounded-2xl transition-colors group">
+                    <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-pink-400 group-hover:scale-110 transition-transform mb-1" />
+                    <span className="text-[9px] lg:text-[10px] text-slate-500 font-bold">Add</span>
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} />
                   </label>
 
-                  <div className="w-px h-8 bg-slate-200 mx-1" />
+                  <div className="w-px h-6 lg:h-8 bg-slate-200/50 lg:bg-slate-200 mx-0.5 lg:mx-1" />
 
                   {/* Downloads */}
                   <button
                     onClick={() => handleDownload(selectedImage, 'jpg')}
-                    className="flex flex-col items-center justify-center w-16 h-14 hover:bg-blue-50 rounded-2xl transition-colors group"
+                    className="flex flex-col items-center justify-center w-14 h-12 lg:w-16 lg:h-14 hover:bg-blue-50 rounded-2xl transition-colors group"
                     title="Download JPG"
                   >
-                    <FileImage className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform mb-1" />
-                    <span className="text-[10px] text-slate-500 font-bold">JPG</span>
+                    <FileImage className="w-4 h-4 lg:w-5 lg:h-5 text-blue-400 group-hover:scale-110 transition-transform mb-1" />
+                    <span className="text-[9px] lg:text-[10px] text-slate-500 font-bold">JPG</span>
                   </button>
 
                   <button
                     onClick={() => handleDownload(selectedImage, 'png')}
-                    className="flex flex-col items-center justify-center w-16 h-14 hover:bg-emerald-50 rounded-2xl transition-colors group"
+                    className="flex flex-col items-center justify-center w-14 h-12 lg:w-16 lg:h-14 hover:bg-emerald-50 rounded-2xl transition-colors group"
                     title="Download PNG (Transparent)"
                   >
-                    <Layers className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform mb-1" />
-                    <span className="text-[10px] text-slate-500 font-bold">PNG</span>
+                    <Layers className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-400 group-hover:scale-110 transition-transform mb-1" />
+                    <span className="text-[9px] lg:text-[10px] text-slate-500 font-bold">PNG</span>
                   </button>
 
                   <button
                     onClick={() => handleDownload(selectedImage, 'pdf')}
-                    className="flex flex-col items-center justify-center w-16 h-14 hover:bg-red-50 rounded-2xl transition-colors group"
+                    className="flex flex-col items-center justify-center w-14 h-12 lg:w-16 lg:h-14 hover:bg-red-50 rounded-2xl transition-colors group"
                     title="Download Printable PDF"
                   >
-                    <FileDown className="w-5 h-5 text-red-400 group-hover:scale-110 transition-transform mb-1" />
-                    <span className="text-[10px] text-slate-500 font-bold">PDF</span>
+                    <FileDown className="w-4 h-4 lg:w-5 lg:h-5 text-red-400 group-hover:scale-110 transition-transform mb-1" />
+                    <span className="text-[9px] lg:text-[10px] text-slate-500 font-bold">PDF</span>
                   </button>
 
                 </div>
