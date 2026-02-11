@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [globalSettings, setGlobalSettings] = useState<StencilSettings>(DEFAULT_SETTINGS);
   const [useGlobalSettings, setUseGlobalSettings] = useState(true);
+  const [zoom, setZoom] = useState(1); // Zoom level (1 = 100%)
 
   const processingTimeoutRef = useRef<number | null>(null);
   const selectedImage = images.find(img => img.id === selectedId);
@@ -262,7 +263,7 @@ const App: React.FC = () => {
         )}
 
         {/* Center - Canvas / Preview */}
-        <main className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col items-center order-2 h-[75vh] lg:h-auto w-full lg:w-auto">
+        <main className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col items-center order-2 h-[85vh] lg:h-auto w-full lg:w-auto">
           {images.length === 0 ? (
             // Empty State
             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-purple-50 to-pink-50 w-full">
@@ -288,20 +289,39 @@ const App: React.FC = () => {
             <>
               {/* Image Preview Area */}
               <div className="flex-1 p-8 flex items-center justify-center w-full relative bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] bg-fixed overflow-hidden bg-[#f8fafc]">
-                <div className="relative shadow-xl shadow-purple-900/5 max-h-full max-w-full group rounded-lg overflow-hidden ring-4 ring-white">
+                <div
+                  className="relative shadow-xl shadow-purple-900/5 max-h-full max-w-full group rounded-lg transition-transform duration-200 ease-out origin-center"
+                  style={{ transform: `scale(${zoom})` }}
+                >
                   {selectedImage.processedUrl ? (
                     <img
                       src={selectedImage.processedUrl}
-                      className="max-h-[calc(100vh-12rem)] max-w-full object-contain bg-white"
+                      className="max-h-[calc(100vh-12rem)] max-w-full object-contain bg-white ring-4 ring-white rounded-lg"
                       alt="Stencil Result"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-96 w-96 bg-white/50 rounded-xl backdrop-blur-sm border border-purple-100">
+                    <div className="flex flex-col items-center justify-center h-96 w-96 bg-white/50 rounded-xl backdrop-blur-sm border border-purple-100 ring-4 ring-white">
                       <RefreshCcw className="w-10 h-10 animate-spin text-pink-400 mb-4" />
                       <p className="text-slate-400 animate-pulse font-medium">✨ processing...</p>
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* ZOOM CONTROL - Floating on Canvas */}
+              <div className="absolute bottom-20 lg:bottom-24 z-30 flex gap-2 items-center bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/50 animate-in fade-in slide-in-from-bottom-2">
+                <button onClick={() => setZoom(Math.max(0.2, zoom - 0.1))} className="p-1 hover:text-pink-500 text-slate-400 transition-colors"><div className="w-3 h-0.5 bg-current rounded-full"></div></button>
+                <input
+                  type="range"
+                  min="0.2"
+                  max="3"
+                  step="0.1"
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-pink-400"
+                />
+                <button onClick={() => setZoom(Math.min(3, zoom + 0.1))} className="p-1 hover:text-pink-500 text-slate-400 transition-colors relative"><Plus className="w-3 h-3" /></button>
+                <span className="text-[10px] font-bold text-slate-400 w-8 text-right">{Math.round(zoom * 100)}%</span>
               </div>
 
               {/* CENTRAL COMMAND BAR */}
