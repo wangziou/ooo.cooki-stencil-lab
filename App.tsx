@@ -16,7 +16,8 @@ const DEFAULT_SETTINGS: StencilSettings = {
   minSize: 1.5,
   maxSize: 3.5,
   showDimensions: true,
-  brilliance: 0,
+
+  saturation: 100,
   contrast: 100,
   brightness: 100,
   sharpness: 0
@@ -584,14 +585,14 @@ const App: React.FC = () => {
 
               {currentSettings.mode === StencilMode.REALISM ? (
                 <>
-                  {/* Brilliance Slider */}
+                  {/* Saturation Slider (Vivid Colors) */}
                   <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
                     <div className="flex justify-between mb-2">
-                      <label className="text-xs font-bold text-slate-600">Brilliance</label>
-                      <span className="text-xs text-purple-500 font-bold">{currentSettings.brilliance}%</span>
+                      <label className="text-xs font-bold text-slate-600">Saturation</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.saturation}%</span>
                     </div>
-                    {/* Range -100 to 100 */}
-                    <input type="range" min="-100" max="100" value={currentSettings.brilliance || 0} onChange={(e) => handleSettingChange('brilliance', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                    {/* Range 0 to 500 for extreme colors */}
+                    <input type="range" min="0" max="500" value={currentSettings.saturation || 100} onChange={(e) => handleSettingChange('saturation', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
                   </div>
 
                   {/* Contrast Slider */}

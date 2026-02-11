@@ -131,12 +131,12 @@ export const generateStencil = async (
   }
 
   if (settings.mode === StencilMode.REALISM) {
-    // Apply CSS-like filters for Realism (Contrast & Brightness only)
-    // Saturation is replaced by Brilliance (applied manually later)
+    // Apply CSS-like filters for Realism
+    const saturate = settings.saturation !== undefined ? settings.saturation : 100;
     const contrast = settings.contrast !== undefined ? settings.contrast : 100;
     const brightness = settings.brightness !== undefined ? settings.brightness : 100;
 
-    ctx.filter = `contrast(${contrast}%) brightness(${brightness}%)`;
+    ctx.filter = `saturate(${saturate}%) contrast(${contrast}%) brightness(${brightness}%)`;
   }
 
   ctx.drawImage(img, 0, 0, w, h);
@@ -147,67 +147,7 @@ export const generateStencil = async (
 
   // Realism specific processing (Brilliance & Sharpness) -> Return Early
   if (settings.mode === StencilMode.REALISM) {
-    const brilliance = settings.brilliance || 0; // -100 to 100
 
-    if (brilliance !== 0) {
-      // Smart Tone Mapping (Brilliance)
-      const strength = brilliance / 100;
-      for (let i = 0; i < w * h; i++) {
-        const r = data[i * 4];
-        const g = data[i * 4 + 1];
-        const b = data[i * 4 + 2];
-
-        // 1. Calculate Luma (Y)
-        const y = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-        // 2. Brilliance Curve
-        let newY = y;
-
-        if (strength > 0) {
-          // USER REQUEST: Lower Contrast, Lower Brightness, Enhance Saturation. NO Exposure change.
-
-          // 1. Lower Brightness (Linear darken)
-          // Brilliance increases -> Brightness decreases
-          newY = y - (0.15 * strength);
-
-          // 2. Lower Contrast (Move towards 0.5)
-          // Brilliance increases -> Contrast decreases
-          const contrastFactor = 1 - (strength * 0.3);
-          newY = (newY - 0.5) * contrastFactor + 0.5;
-
-          // Clamp
-          newY = Math.max(0, Math.min(1, newY));
-
-        } else {
-          // Negative Brilliance: Flatten / Dull
-          newY = y * (1 + strength * 0.5); // Just darken/dull
-        }
-
-        // 3. Apply Y shift to RGB + Saturation Boost
-        // Saturation Boost Factor (User requested "very vivid" colors)
-        // Previous value was 1 + strength * 0.4. Now boosting to 1 + strength * 1.5
-        const satBoost = strength > 0 ? (1 + strength * 1.5) : 1;
-
-        if (y > 0.001) {
-          const scale = newY / y;
-          let rNew = r * scale;
-          let gNew = g * scale;
-          let bNew = b * scale;
-
-          // Apply Saturation (Lerp away from grayscale)
-          if (strength > 0) {
-            const gray = rNew * 0.299 + gNew * 0.587 + bNew * 0.114;
-            rNew = gray + (rNew - gray) * satBoost;
-            gNew = gray + (gNew - gray) * satBoost;
-            bNew = gray + (bNew - gray) * satBoost;
-          }
-
-          data[i * 4] = clamp(rNew, 0, 255);
-          data[i * 4 + 1] = clamp(gNew, 0, 255);
-          data[i * 4 + 2] = clamp(bNew, 0, 255);
-        }
-      }
-    }
 
     if (settings.sharpness && settings.sharpness > 0) {
       // Simple Sharpen Kernel
