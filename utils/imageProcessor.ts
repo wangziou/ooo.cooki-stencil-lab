@@ -191,8 +191,9 @@ export const generateStencil = async (
         }
 
         // 3. Apply Y shift to RGB + Saturation Boost
-        // Saturation Boost Factor
-        const satBoost = strength > 0 ? (1 + strength * 0.4) : 1;
+        // Saturation Boost Factor (User requested "very vivid" colors)
+        // Previous value was 1 + strength * 0.4. Now boosting to 1 + strength * 1.5
+        const satBoost = strength > 0 ? (1 + strength * 1.5) : 1;
 
         if (y > 0.001) {
           const scale = newY / y;
