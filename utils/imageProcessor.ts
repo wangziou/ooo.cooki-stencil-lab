@@ -107,7 +107,7 @@ export const generateStencil = async (
 ): Promise<string> => {
   // 1. Resize if too large to keep performance snappy during processing
   // Note: We will upscale for the final A4 print, but processing happens on this size
-  const MAX_DIM = 1600;
+  const MAX_DIM = 2500;
   let w = img.naturalWidth;
   let h = img.naturalHeight;
 

@@ -143,21 +143,48 @@ const App: React.FC = () => {
     updateSettingsAndProcess(newSettings);
   };
 
-  const handleDownload = (img: ProcessedImage, format: 'png' | 'jpg' | 'pdf') => {
+  const handleDownload = async (img: ProcessedImage, format: 'png' | 'jpg' | 'pdf') => {
     if (!img.processedUrl) return;
 
-    const link = document.createElement('a');
+    const fileName = `${img.name.split('.')[0]}_stencil.${format}`;
+
     if (format === 'pdf') {
       const pdf = new jsPDF();
       const imgProps = pdf.getImageProperties(img.processedUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       pdf.addImage(img.processedUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${img.name.split('.')[0]}_stencil.pdf`);
+      pdf.save(fileName);
     } else {
+      // Try Web Share API first (Mobile friendly)
+      if (navigator.share) {
+        try {
+          // Convert DataURL to Blob
+          const response = await fetch(img.processedUrl);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: `image/${format === 'jpg' ? 'jpeg' : 'png'}` });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Cooki Stencil',
+              text: 'Here is your stencil!',
+            });
+            return;
+          }
+        } catch (error) {
+          console.warn('Share failed', error);
+          // Fallthrough to regular download
+        }
+      }
+
+      // Standard Download Link
+      const link = document.createElement('a');
       link.href = img.processedUrl;
-      link.download = `${img.name.split('.')[0]}_stencil.${format}`;
+      link.download = fileName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     }
   };
 
