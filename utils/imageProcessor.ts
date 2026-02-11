@@ -146,247 +146,248 @@ export const generateStencil = async (
   const data = imgData.data;
 
   // Realism specific processing (Brilliance & Sharpness) -> Return Early
-  // Smart Vibrance / Saturation Logic
-  const saturationSetting = settings.saturation !== undefined ? settings.saturation : 100;
+  if (settings.mode === StencilMode.REALISM) {
+    // Smart Vibrance / Saturation Logic
+    const saturationSetting = settings.saturation !== undefined ? settings.saturation : 100;
 
-  // Only process if saturation is different from default (100)
-  if (saturationSetting !== 100) {
-    // Normalize strength: 100 = 0, 500 = 4.0, 0 = -1.0
-    const strength = (saturationSetting - 100) / 100;
+    // Only process if saturation is different from default (100)
+    if (saturationSetting !== 100) {
+      // Normalize strength: 100 = 0, 500 = 4.0, 0 = -1.0
+      const strength = (saturationSetting - 100) / 100;
+
+      for (let i = 0; i < w * h; i++) {
+        const r = data[i * 4];
+        const g = data[i * 4 + 1];
+        const b = data[i * 4 + 2];
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const range = max - min;
+
+        // Saturation (0 to 1)
+        // Avoid div by zero
+        const sat = max === 0 ? 0 : range / max;
+
+        // Smart Vibrance Boost
+        // Boost factor depends on saturation. 
+        // Low sat = Higher boost. High sat = Lower boost.
+        // We use (1 - sat) to target muted colors.
+        // We square it to really focus on the grey/muted tones and protect vivid ones.
+
+        let boost = 0;
+        if (strength >= 0) {
+          // 2.0 works well as a scaler for the curve
+          boost = strength * (1.0 - Math.pow(sat, 2));
+          // Skin tone protection? 
+          // Skin tones (orange/red) often have moderate saturation. 
+          // The (1-sat) curve naturally prevents over-saturating already rich skin tones.
+        } else {
+          // Desaturation is linear
+          boost = strength;
+        }
+
+        // Apply Boost
+        // Standard saturation formula: RGB = Gray + (RGB - Gray) * (1 + boost)
+        const gray = r * 0.299 + g * 0.587 + b * 0.114;
+
+        let rNew = gray + (r - gray) * (1 + boost);
+        let gNew = gray + (g - gray) * (1 + boost);
+        let bNew = gray + (b - gray) * (1 + boost);
+
+        // "Slightly increase Contrast" to pop
+        if (strength > 0) {
+          const contrastBoost = 1.05 + (strength * 0.02); // Subtle Scaling
+          rNew = (rNew - 128) * contrastBoost + 128;
+          gNew = (gNew - 128) * contrastBoost + 128;
+          bNew = (bNew - 128) * contrastBoost + 128;
+        }
+
+        data[i * 4] = clamp(rNew, 0, 255);
+        data[i * 4 + 1] = clamp(gNew, 0, 255);
+        data[i * 4 + 2] = clamp(bNew, 0, 255);
+      }
+    }
+
+
+    if (settings.sharpness && settings.sharpness > 0) {
+      // Simple Sharpen Kernel
+      // A standard sharpen kernel
+      //  0 -1  0
+      // -1  5 -1
+      //  0 -1  0
+      // For controllable sharpness, we can blend original and sharpened, 
+      // or use a weighted kernel. Let's use a weighted approach.
+      const s = settings.sharpness; // 0 to 10
+      // The center weight increases with sharpness
+      // This is a basic high-pass filter addition
+      const kernel = [
+        0, -s, 0,
+        -s, 4 * s + 1, -s,
+        0, -s, 0
+      ];
+      // Normalization check? The sum is 1, so brightness is preserved.
+      convolve(data, w, h, kernel);
+    }
+    // Put data back and return
+    ctx.putImageData(imgData, 0, 0);
+    return finishProcessing(canvas, settings, w, h);
+  }
+
+  // 2. Extract Luma (Grayscale)
+  const luma = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    // Standard Rec. 601 luma
+    luma[i] = data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
+  }
+
+  const output = new Float32Array(w * h);
+
+  // 3. Pre-process (Sharpen or Blur based on Detail Level)
+  // Detail Level slider (-4 to 5)
+  // < 0: Sharpen (Max Detail)
+  // > 0: Blur (Smoother)
+  let processedLuma = luma;
+
+  if (settings.noiseReduction < 0) {
+    // SHARPEN (Unsharp Mask)
+    // Strength is proportional to negative value
+    const strength = Math.abs(settings.noiseReduction) * 0.5;
+    const blurForSharpen = boxBlur(luma, w, h, 1);
+    processedLuma = new Float32Array(w * h);
 
     for (let i = 0; i < w * h; i++) {
-      const r = data[i * 4];
-      const g = data[i * 4 + 1];
-      const b = data[i * 4 + 2];
-
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      const range = max - min;
-
-      // Saturation (0 to 1)
-      // Avoid div by zero
-      const sat = max === 0 ? 0 : range / max;
-
-      // Smart Vibrance Boost
-      // Boost factor depends on saturation. 
-      // Low sat = Higher boost. High sat = Lower boost.
-      // We use (1 - sat) to target muted colors.
-      // We square it to really focus on the grey/muted tones and protect vivid ones.
-
-      let boost = 0;
-      if (strength >= 0) {
-        // 2.0 works well as a scaler for the curve
-        boost = strength * (1.0 - Math.pow(sat, 2));
-        // Skin tone protection? 
-        // Skin tones (orange/red) often have moderate saturation. 
-        // The (1-sat) curve naturally prevents over-saturating already rich skin tones.
-      } else {
-        // Desaturation is linear
-        boost = strength;
-      }
-
-      // Apply Boost
-      // Standard saturation formula: RGB = Gray + (RGB - Gray) * (1 + boost)
-      const gray = r * 0.299 + g * 0.587 + b * 0.114;
-
-      let rNew = gray + (r - gray) * (1 + boost);
-      let gNew = gray + (g - gray) * (1 + boost);
-      let bNew = gray + (b - gray) * (1 + boost);
-
-      // "Slightly increase Contrast" to pop
-      if (strength > 0) {
-        const contrastBoost = 1.05 + (strength * 0.02); // Subtle Scaling
-        rNew = (rNew - 128) * contrastBoost + 128;
-        gNew = (gNew - 128) * contrastBoost + 128;
-        bNew = (bNew - 128) * contrastBoost + 128;
-      }
-
-      data[i * 4] = clamp(rNew, 0, 255);
-      data[i * 4 + 1] = clamp(gNew, 0, 255);
-      data[i * 4 + 2] = clamp(bNew, 0, 255);
+      // Original + (Original - Blurred) * amount
+      const detail = luma[i] - blurForSharpen[i];
+      const val = luma[i] + detail * strength;
+      processedLuma[i] = Math.min(255, Math.max(0, val));
+    }
+  } else if (settings.noiseReduction > 0) {
+    // BLUR (Smooth)
+    // Only apply pre-blur here for SOLID mode. 
+    // For Outline mode, we use the parameter to adjust DoG radii.
+    if (settings.mode === StencilMode.SOLID) {
+      processedLuma = boxBlur(luma, w, h, settings.noiseReduction);
     }
   }
 
-
-  if (settings.sharpness && settings.sharpness > 0) {
-    // Simple Sharpen Kernel
-    // A standard sharpen kernel
-    //  0 -1  0
-    // -1  5 -1
-    //  0 -1  0
-    // For controllable sharpness, we can blend original and sharpened, 
-    // or use a weighted kernel. Let's use a weighted approach.
-    const s = settings.sharpness; // 0 to 10
-    // The center weight increases with sharpness
-    // This is a basic high-pass filter addition
-    const kernel = [
-      0, -s, 0,
-      -s, 4 * s + 1, -s,
-      0, -s, 0
-    ];
-    // Normalization check? The sum is 1, so brightness is preserved.
-    convolve(data, w, h, kernel);
-  }
-  // Put data back and return
-  ctx.putImageData(imgData, 0, 0);
-  return finishProcessing(canvas, settings, w, h);
-}
-
-// 2. Extract Luma (Grayscale)
-const luma = new Float32Array(w * h);
-for (let i = 0; i < w * h; i++) {
-  // Standard Rec. 601 luma
-  luma[i] = data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
-}
-
-const output = new Float32Array(w * h);
-
-// 3. Pre-process (Sharpen or Blur based on Detail Level)
-// Detail Level slider (-4 to 5)
-// < 0: Sharpen (Max Detail)
-// > 0: Blur (Smoother)
-let processedLuma = luma;
-
-if (settings.noiseReduction < 0) {
-  // SHARPEN (Unsharp Mask)
-  // Strength is proportional to negative value
-  const strength = Math.abs(settings.noiseReduction) * 0.5;
-  const blurForSharpen = boxBlur(luma, w, h, 1);
-  processedLuma = new Float32Array(w * h);
-
-  for (let i = 0; i < w * h; i++) {
-    // Original + (Original - Blurred) * amount
-    const detail = luma[i] - blurForSharpen[i];
-    const val = luma[i] + detail * strength;
-    processedLuma[i] = Math.min(255, Math.max(0, val));
-  }
-} else if (settings.noiseReduction > 0) {
-  // BLUR (Smooth)
-  // Only apply pre-blur here for SOLID mode. 
-  // For Outline mode, we use the parameter to adjust DoG radii.
+  // 4. Apply Algorithms
   if (settings.mode === StencilMode.SOLID) {
-    processedLuma = boxBlur(luma, w, h, settings.noiseReduction);
-  }
-}
+    /**
+     * ADAPTIVE THRESHOLDING
+     */
+    // Calculate local mean with a medium radius (simulates local lighting)
+    const localMean = boxBlur(processedLuma, w, h, 16);
 
-// 4. Apply Algorithms
-if (settings.mode === StencilMode.SOLID) {
-  /**
-   * ADAPTIVE THRESHOLDING
-   */
-  // Calculate local mean with a medium radius (simulates local lighting)
-  const localMean = boxBlur(processedLuma, w, h, 16);
+    // Threshold sensitivity
+    const bias = (255 - settings.threshold) / 5;
 
-  // Threshold sensitivity
-  const bias = (255 - settings.threshold) / 5;
+    for (let i = 0; i < w * h; i++) {
+      if (processedLuma[i] < localMean[i] - bias) {
+        output[i] = 0; // Ink
+      } else {
+        output[i] = 255; // Skin
+      }
+    }
 
-  for (let i = 0; i < w * h; i++) {
-    if (processedLuma[i] < localMean[i] - bias) {
-      output[i] = 0; // Ink
-    } else {
-      output[i] = 255; // Skin
+  } else {
+    /**
+     * DIFFERENCE OF GAUSSIANS (DoG)
+     */
+
+    // If we are in sharpening mode (negative), we use tight radii.
+    // If we are in smoothing mode (positive), we scale radii up.
+    const effectiveBlur = Math.max(0, settings.noiseReduction);
+
+    // Base radius
+    const r1 = Math.max(0.5, effectiveBlur * 0.8);
+    const r2 = r1 * 2.5;
+
+    // Use processedLuma (which might be sharpened) or raw luma?
+    // Using sharpened luma for DoG creates very crisp edges.
+    const blur1 = boxBlur(processedLuma, w, h, Math.ceil(r1));
+    const blur2 = boxBlur(processedLuma, w, h, Math.ceil(r2));
+
+    const sensitivity = (255 - settings.threshold) / 255;
+    const cutoff = 2 + (sensitivity * 10);
+
+    for (let i = 0; i < w * h; i++) {
+      const diff = (blur1[i] - blur2[i]);
+      if (diff < -cutoff) {
+        output[i] = 0; // Black
+      } else {
+        output[i] = 255; // White
+      }
     }
   }
 
-} else {
-  /**
-   * DIFFERENCE OF GAUSSIANS (DoG)
-   */
+  // 5. Morphology (Thickness)
+  let finalMap = output;
+  if (settings.thickness !== 0) {
+    const passes = Math.abs(settings.thickness);
+    const isDilate = settings.thickness > 0;
 
-  // If we are in sharpening mode (negative), we use tight radii.
-  // If we are in smoothing mode (positive), we scale radii up.
-  const effectiveBlur = Math.max(0, settings.noiseReduction);
+    let bufA = Float32Array.from(output);
+    let bufB = new Float32Array(output.length);
 
-  // Base radius
-  const r1 = Math.max(0.5, effectiveBlur * 0.8);
-  const r2 = r1 * 2.5;
+    const safePasses = Math.min(passes, 15);
 
-  // Use processedLuma (which might be sharpened) or raw luma?
-  // Using sharpened luma for DoG creates very crisp edges.
-  const blur1 = boxBlur(processedLuma, w, h, Math.ceil(r1));
-  const blur2 = boxBlur(processedLuma, w, h, Math.ceil(r2));
+    for (let p = 0; p < safePasses; p++) {
+      const src = p % 2 === 0 ? bufA : bufB;
+      const dst = p % 2 === 0 ? bufB : bufA;
 
-  const sensitivity = (255 - settings.threshold) / 255;
-  const cutoff = 2 + (sensitivity * 10);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = y * w + x;
+          const val = src[idx];
 
-  for (let i = 0; i < w * h; i++) {
-    const diff = (blur1[i] - blur2[i]);
-    if (diff < -cutoff) {
-      output[i] = 0; // Black
-    } else {
-      output[i] = 255; // White
-    }
-  }
-}
+          if (isDilate) {
+            if (val > 128) {
+              const n = y > 0 ? src[idx - w] : 255;
+              const s = y < h - 1 ? src[idx + w] : 255;
+              const w_pix = x > 0 ? src[idx - 1] : 255;
+              const e_pix = x < w - 1 ? src[idx + 1] : 255;
 
-// 5. Morphology (Thickness)
-let finalMap = output;
-if (settings.thickness !== 0) {
-  const passes = Math.abs(settings.thickness);
-  const isDilate = settings.thickness > 0;
-
-  let bufA = Float32Array.from(output);
-  let bufB = new Float32Array(output.length);
-
-  const safePasses = Math.min(passes, 15);
-
-  for (let p = 0; p < safePasses; p++) {
-    const src = p % 2 === 0 ? bufA : bufB;
-    const dst = p % 2 === 0 ? bufB : bufA;
-
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const idx = y * w + x;
-        const val = src[idx];
-
-        if (isDilate) {
-          if (val > 128) {
-            const n = y > 0 ? src[idx - w] : 255;
-            const s = y < h - 1 ? src[idx + w] : 255;
-            const w_pix = x > 0 ? src[idx - 1] : 255;
-            const e_pix = x < w - 1 ? src[idx + 1] : 255;
-
-            if (n < 128 || s < 128 || w_pix < 128 || e_pix < 128) {
-              dst[idx] = 0;
-            } else {
-              dst[idx] = 255;
-            }
-          } else {
-            dst[idx] = 0;
-          }
-        } else {
-          if (val < 128) {
-            const n = y > 0 ? src[idx - w] : 0;
-            const s = y < h - 1 ? src[idx + w] : 0;
-            const w_pix = x > 0 ? src[idx - 1] : 0;
-            const e_pix = x < w - 1 ? src[idx + 1] : 0;
-
-            if (n > 128 || s > 128 || w_pix > 128 || e_pix > 128) {
-              dst[idx] = 255;
+              if (n < 128 || s < 128 || w_pix < 128 || e_pix < 128) {
+                dst[idx] = 0;
+              } else {
+                dst[idx] = 255;
+              }
             } else {
               dst[idx] = 0;
             }
           } else {
-            dst[idx] = 255;
+            if (val < 128) {
+              const n = y > 0 ? src[idx - w] : 0;
+              const s = y < h - 1 ? src[idx + w] : 0;
+              const w_pix = x > 0 ? src[idx - 1] : 0;
+              const e_pix = x < w - 1 ? src[idx + 1] : 0;
+
+              if (n > 128 || s > 128 || w_pix > 128 || e_pix > 128) {
+                dst[idx] = 255;
+              } else {
+                dst[idx] = 0;
+              }
+            } else {
+              dst[idx] = 255;
+            }
           }
         }
       }
     }
+    finalMap = safePasses % 2 === 0 ? bufA : bufB;
   }
-  finalMap = safePasses % 2 === 0 ? bufA : bufB;
-}
 
-// 6. Create Intermediate Stencil Image
-const dstData = imgData.data;
-for (let i = 0; i < w * h; i++) {
-  const val = finalMap[i];
-  dstData[i * 4] = val;
-  dstData[i * 4 + 1] = val;
-  dstData[i * 4 + 2] = val;
-  dstData[i * 4 + 3] = 255;
-}
-ctx.putImageData(imgData, 0, 0);
-return finishProcessing(canvas, settings, w, h);
+  // 6. Create Intermediate Stencil Image
+  const dstData = imgData.data;
+  for (let i = 0; i < w * h; i++) {
+    const val = finalMap[i];
+    dstData[i * 4] = val;
+    dstData[i * 4 + 1] = val;
+    dstData[i * 4 + 2] = val;
+    dstData[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return finishProcessing(canvas, settings, w, h);
 };
 
 function finishProcessing(canvas: HTMLCanvasElement, settings: StencilSettings, w: number, h: number): string {
