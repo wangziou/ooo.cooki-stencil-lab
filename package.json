@@ -2,6 +2,7 @@
   "name": "cooki-stencil-lab",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://wangziou.github.io/ooo.cooki-stencil-lab",
   "type": "module",
   "scripts": {
     "dev": "vite",
