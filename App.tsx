@@ -635,7 +635,7 @@ const App: React.FC = () => {
                       <label className="text-xs font-bold text-slate-600">Contrast</label>
                       <span className="text-xs text-purple-500 font-bold">{currentSettings.contrast}%</span>
                     </div>
-                    <input type="range" min="0" max="200" value={currentSettings.contrast || 100} onChange={(e) => handleSettingChange('contrast', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                    <input type="range" min="0" max="500" value={currentSettings.contrast || 100} onChange={(e) => handleSettingChange('contrast', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
                   </div>
 
                   {/* Brightness Slider */}
@@ -644,7 +644,7 @@ const App: React.FC = () => {
                       <label className="text-xs font-bold text-slate-600">Brightness</label>
                       <span className="text-xs text-purple-500 font-bold">{currentSettings.brightness}%</span>
                     </div>
-                    <input type="range" min="0" max="200" value={currentSettings.brightness || 100} onChange={(e) => handleSettingChange('brightness', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                    <input type="range" min="0" max="500" value={currentSettings.brightness || 100} onChange={(e) => handleSettingChange('brightness', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
                   </div>
 
                   {/* Sharpness Slider */}
