@@ -32,9 +32,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1VanuAQAZD0xemU7AaEombv
 This project is configured to deploy to GitHub Pages using GitHub Actions.
 
 1. Go to your repository **Settings** -> **Pages**.
-2. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-3. Select `gh-pages` branch (this branch is created automatically by the workflow after the first successful run).
-4. Save.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions** (NOT "Deploy from a branch").
+3. The workflow will automatically trigger on push to `main`.
 
 The deployment workflow runs automatically on every push to the `main` branch.
 
