@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: StencilSettings = {
   variantCount: 9,
   minSize: 1.5,
   maxSize: 3.5,
-  showDimensions: true,
+
 
   saturation: 100,
   contrast: 100,
