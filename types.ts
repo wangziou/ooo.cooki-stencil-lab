@@ -1,6 +1,7 @@
 export enum StencilMode {
   SOLID = 'SOLID',
-  HOLLOW = 'HOLLOW'
+  HOLLOW = 'HOLLOW',
+  REALISM = 'REALISM'
 }
 
 export interface StencilSettings {
@@ -14,6 +15,12 @@ export interface StencilSettings {
   minSize: number; // Inches (0.5 - 9)
   maxSize: number; // Inches (0.5 - 9)
   showDimensions: boolean; // Draw size label
+
+  // Realism Mode Settings
+  saturation?: number; // 0-200 (100 = default)
+  contrast?: number;   // 0-200 (100 = default)
+  brightness?: number; // 0-200 (100 = default)
+  sharpness?: number;  // 0-10 (0 = default)
 }
 
 export interface ProcessedImage {

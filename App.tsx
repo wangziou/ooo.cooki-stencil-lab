@@ -15,7 +15,11 @@ const DEFAULT_SETTINGS: StencilSettings = {
   variantCount: 9,
   minSize: 1.5,
   maxSize: 3.5,
-  showDimensions: true
+  showDimensions: true,
+  saturation: 100,
+  contrast: 100,
+  brightness: 100,
+  sharpness: 0
 };
 
 const App: React.FC = () => {
@@ -510,112 +514,165 @@ const App: React.FC = () => {
               {/* Mode Selection */}
               <div>
                 <label className="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider">Stencil Style</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleSettingChange('mode', StencilMode.HOLLOW)}
-                    className={`relative py-3 px-2 text-xs font-medium rounded-xl border-2 transition-all overflow-hidden ${currentSettings.mode === StencilMode.HOLLOW
+                    className={`relative py-3 px-1 text-xs font-medium rounded-xl border-2 transition-all overflow-hidden ${currentSettings.mode === StencilMode.HOLLOW
                       ? 'bg-white border-purple-400 text-purple-600 shadow-md shadow-purple-100'
                       : 'bg-white/50 border-transparent text-slate-400 hover:border-purple-200 hover:bg-white'
                       }`}
                   >
-                    <div className="mb-1 text-lg font-bold font-[Fredoka]">Outline</div>
-                    <div className="text-[10px] opacity-70">Edge Detect</div>
-                    {currentSettings.mode === StencilMode.HOLLOW && <div className="absolute top-2 right-2 w-2 h-2 bg-purple-400 rounded-full animate-pulse" />}
+                    <div className="mb-1 text-sm font-bold font-[Fredoka]">Outline</div>
+                    <div className="text-[9px] opacity-70">Edge Detect</div>
+                    {currentSettings.mode === StencilMode.HOLLOW && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />}
                   </button>
                   <button
                     onClick={() => handleSettingChange('mode', StencilMode.SOLID)}
-                    className={`relative py-3 px-2 text-xs font-medium rounded-xl border-2 transition-all overflow-hidden ${currentSettings.mode === StencilMode.SOLID
+                    className={`relative py-3 px-1 text-xs font-medium rounded-xl border-2 transition-all overflow-hidden ${currentSettings.mode === StencilMode.SOLID
                       ? 'bg-white border-purple-400 text-purple-600 shadow-md shadow-purple-100'
                       : 'bg-white/50 border-transparent text-slate-400 hover:border-purple-200 hover:bg-white'
                       }`}
                   >
-                    <div className="mb-1 text-lg font-bold font-[Fredoka]">Solid</div>
-                    <div className="text-[10px] opacity-70">Adaptive Scan</div>
-                    {currentSettings.mode === StencilMode.SOLID && <div className="absolute top-2 right-2 w-2 h-2 bg-purple-400 rounded-full animate-pulse" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Threshold Slider + Presets */}
-              <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
-                <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold text-slate-600">
-                    {currentSettings.mode === StencilMode.SOLID ? 'Scan Sensitivity' : 'Edge Detection'}
-                  </label>
-                  <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.threshold}</span>
-                </div>
-
-                {/* Presets */}
-                <div className="flex gap-2 mb-3">
-                  <button
-                    onClick={() => applyPreset('fineline')}
-                    className="flex-1 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-pink-300 text-[10px] font-bold text-slate-500 hover:text-pink-500 transition-colors shadow-sm"
-                  >
-                    Fineline
+                    <div className="mb-1 text-sm font-bold font-[Fredoka]">Solid</div>
+                    <div className="text-[9px] opacity-70">Adaptive</div>
+                    {currentSettings.mode === StencilMode.SOLID && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />}
                   </button>
                   <button
-                    onClick={() => applyPreset('bold')}
-                    className="flex-1 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-pink-300 text-[10px] font-bold text-slate-500 hover:text-pink-500 transition-colors shadow-sm"
+                    onClick={() => handleSettingChange('mode', StencilMode.REALISM)}
+                    className={`relative py-3 px-1 text-xs font-medium rounded-xl border-2 transition-all overflow-hidden ${currentSettings.mode === StencilMode.REALISM
+                      ? 'bg-white border-purple-400 text-purple-600 shadow-md shadow-purple-100'
+                      : 'bg-white/50 border-transparent text-slate-400 hover:border-purple-200 hover:bg-white'
+                      }`}
                   >
-                    Bold
+                    <div className="mb-1 text-sm font-bold font-[Fredoka]">Realism</div>
+                    <div className="text-[9px] opacity-70">Color</div>
+                    {currentSettings.mode === StencilMode.REALISM && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />}
                   </button>
                 </div>
-
-                <input
-                  type="range"
-                  min="0"
-                  max="255"
-                  value={currentSettings.threshold}
-                  onChange={(e) => handleSettingChange('threshold', parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
-                />
-                <p className="text-[10px] text-slate-400 mt-2 flex justify-between font-medium">
-                  <span>{currentSettings.mode === StencilMode.SOLID ? 'Cleaner' : 'Fine Lines'}</span>
-                  <span>{currentSettings.mode === StencilMode.SOLID ? 'Darker' : 'Main Shapes'}</span>
-                </p>
               </div>
 
-              {/* Detail Level Slider (Range -4 to 5) */}
-              <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
-                <div className="flex justify-between mb-4">
-                  <label className="text-xs font-bold text-slate-600">Detail Level</label>
-                  <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.noiseReduction}</span>
-                </div>
-                <input
-                  type="range"
-                  min="-4"
-                  max="5"
-                  step="1"
-                  value={currentSettings.noiseReduction}
-                  onChange={(e) => handleSettingChange('noiseReduction', parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
-                />
-                <p className="text-[10px] text-slate-400 mt-2 flex justify-between font-medium">
-                  <span>Sharpen</span>
-                  <span>Smooth</span>
-                </p>
-              </div>
+              {currentSettings.mode === StencilMode.REALISM ? (
+                <>
+                  {/* Saturation Slider */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-600">Vibrance (Saturation)</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.saturation}%</span>
+                    </div>
+                    <input type="range" min="0" max="200" value={currentSettings.saturation || 100} onChange={(e) => handleSettingChange('saturation', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                  </div>
 
-              {/* Thickness Slider */}
-              <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
-                <div className="flex justify-between mb-4">
-                  <label className="text-xs font-bold text-slate-600">Line Weight</label>
-                  <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.thickness > 0 ? '+' : ''}{currentSettings.thickness}</span>
-                </div>
-                <input
-                  type="range"
-                  min="-5"
-                  max="10"
-                  step="1"
-                  value={currentSettings.thickness}
-                  onChange={(e) => handleSettingChange('thickness', parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
-                />
-                <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-medium">
-                  <span>Ultra Fine</span>
-                  <span>Heavy</span>
-                </div>
-              </div>
+                  {/* Contrast Slider */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-600">Contrast</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.contrast}%</span>
+                    </div>
+                    <input type="range" min="0" max="200" value={currentSettings.contrast || 100} onChange={(e) => handleSettingChange('contrast', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                  </div>
+
+                  {/* Brightness Slider */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-600">Brightness</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.brightness}%</span>
+                    </div>
+                    <input type="range" min="0" max="200" value={currentSettings.brightness || 100} onChange={(e) => handleSettingChange('brightness', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                  </div>
+
+                  {/* Sharpness Slider */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-600">Sharpness</label>
+                      <span className="text-xs text-purple-500 font-bold">{currentSettings.sharpness}</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="1" value={currentSettings.sharpness || 0} onChange={(e) => handleSettingChange('sharpness', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Threshold Slider + Presets */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between items-center mb-3">
+                      <label className="text-xs font-bold text-slate-600">
+                        {currentSettings.mode === StencilMode.SOLID ? 'Scan Sensitivity' : 'Edge Detection'}
+                      </label>
+                      <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.threshold}</span>
+                    </div>
+
+                    {/* Presets */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => applyPreset('fineline')}
+                        className="flex-1 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-pink-300 text-[10px] font-bold text-slate-500 hover:text-pink-500 transition-colors shadow-sm"
+                      >
+                        Fineline
+                      </button>
+                      <button
+                        onClick={() => applyPreset('bold')}
+                        className="flex-1 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-pink-300 text-[10px] font-bold text-slate-500 hover:text-pink-500 transition-colors shadow-sm"
+                      >
+                        Bold
+                      </button>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="0"
+                      max="255"
+                      value={currentSettings.threshold}
+                      onChange={(e) => handleSettingChange('threshold', parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-2 flex justify-between font-medium">
+                      <span>{currentSettings.mode === StencilMode.SOLID ? 'Cleaner' : 'Fine Lines'}</span>
+                      <span>{currentSettings.mode === StencilMode.SOLID ? 'Darker' : 'Main Shapes'}</span>
+                    </p>
+                  </div>
+
+                  {/* Detail Level Slider (Range -4 to 5) */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-4">
+                      <label className="text-xs font-bold text-slate-600">Detail Level</label>
+                      <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.noiseReduction}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-4"
+                      max="5"
+                      step="1"
+                      value={currentSettings.noiseReduction}
+                      onChange={(e) => handleSettingChange('noiseReduction', parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-2 flex justify-between font-medium">
+                      <span>Sharpen</span>
+                      <span>Smooth</span>
+                    </p>
+                  </div>
+
+                  {/* Thickness Slider */}
+                  <div className="bg-white/50 p-4 rounded-2xl border border-white shadow-sm ring-1 ring-purple-50">
+                    <div className="flex justify-between mb-4">
+                      <label className="text-xs font-bold text-slate-600">Line Weight</label>
+                      <span className="text-xs text-purple-500 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">{currentSettings.thickness > 0 ? '+' : ''}{currentSettings.thickness}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-5"
+                      max="10"
+                      step="1"
+                      value={currentSettings.thickness}
+                      onChange={(e) => handleSettingChange('thickness', parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-purple-400 hover:accent-pink-400 transition-colors"
+                    />
+                    <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-medium">
+                      <span>Ultra Fine</span>
+                      <span>Heavy</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="pt-2">
                 <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100 p-4 rounded-2xl flex gap-3 shadow-sm">
