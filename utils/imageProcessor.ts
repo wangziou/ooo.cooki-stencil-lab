@@ -173,35 +173,44 @@ export const generateStencil = async (
 
           newY = y + shadowLift - highlightDamp;
 
-          // Midtone Contrast Boost (Sigmoid)
-          // We mix original linear Y with a sigmoid curve
-          const sigmoid = 1 / (1 + Math.exp(-10 * (newY - 0.5))); // Steep sigmoid
-          // Map sigmoid back to 0-1 nicely
-          // Or simpler: use a contrast polynomial
-          // f(x) = x + alpha * x * (1-x) * (x-0.5) ? No
+          // USER REQUEST: Lower Contrast, Lower Brightness, Enhance Saturation
 
-          // Simple contrast stretch around 0.5
-          // val = (val - 0.5) * contrast + 0.5
-          const contrastFactor = 1 + (strength * 0.5); // Up to 1.5x contrast
-          const contrasted = (newY - 0.5) * contrastFactor + 0.5;
+          // 1. Lower Brightness (Linear darken)
+          newY = newY - (0.05 * strength);
 
-          // Learn/Mix: 
-          // We want the shadow/highlight recovery, AND the contrast.
-          // Let's use the contrasted version, but clamped.
-          newY = Math.max(0, Math.min(1, contrasted));
+          // 2. Lower Contrast (Move towards 0.5)
+          const contrastFactor = 1 - (strength * 0.15);
+          newY = (newY - 0.5) * contrastFactor + 0.5;
+
+          // Clamp
+          newY = Math.max(0, Math.min(1, newY));
 
         } else {
           // Negative Brilliance: Flatten / Dull
           newY = y * (1 + strength * 0.5); // Just darken/dull
         }
 
-        // 3. Apply Y shift to RGB
-        // preserve color ratios
+        // 3. Apply Y shift to RGB + Saturation Boost
+        // Saturation Boost Factor
+        const satBoost = strength > 0 ? (1 + strength * 0.4) : 1;
+
         if (y > 0.001) {
           const scale = newY / y;
-          data[i * 4] = clamp(r * scale, 0, 255);
-          data[i * 4 + 1] = clamp(g * scale, 0, 255);
-          data[i * 4 + 2] = clamp(b * scale, 0, 255);
+          let rNew = r * scale;
+          let gNew = g * scale;
+          let bNew = b * scale;
+
+          // Apply Saturation (Lerp away from grayscale)
+          if (strength > 0) {
+            const gray = rNew * 0.299 + gNew * 0.587 + bNew * 0.114;
+            rNew = gray + (rNew - gray) * satBoost;
+            gNew = gray + (gNew - gray) * satBoost;
+            bNew = gray + (bNew - gray) * satBoost;
+          }
+
+          data[i * 4] = clamp(rNew, 0, 255);
+          data[i * 4 + 1] = clamp(gNew, 0, 255);
+          data[i * 4 + 2] = clamp(bNew, 0, 255);
         }
       }
     }
