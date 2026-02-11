@@ -164,22 +164,15 @@ export const generateStencil = async (
         let newY = y;
 
         if (strength > 0) {
-          // Positive Brilliance: HDR look
-          // Lift shadows: add to Y where Y is small
-          const shadowLift = Math.pow(1 - y, 5) * 1.0 * strength; // Strong lift at very bottom
-
-          // Dampen highlights: subtract from Y where Y is large
-          const highlightDamp = Math.pow(y, 4) * 0.4 * strength;
-
-          newY = y + shadowLift - highlightDamp;
-
-          // USER REQUEST: Lower Contrast, Lower Brightness, Enhance Saturation
+          // USER REQUEST: Lower Contrast, Lower Brightness, Enhance Saturation. NO Exposure change.
 
           // 1. Lower Brightness (Linear darken)
-          newY = newY - (0.05 * strength);
+          // Brilliance increases -> Brightness decreases
+          newY = y - (0.15 * strength);
 
           // 2. Lower Contrast (Move towards 0.5)
-          const contrastFactor = 1 - (strength * 0.15);
+          // Brilliance increases -> Contrast decreases
+          const contrastFactor = 1 - (strength * 0.3);
           newY = (newY - 0.5) * contrastFactor + 0.5;
 
           // Clamp
